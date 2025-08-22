@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Unstructured Data Table</title>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+</head>
+<body>
+  <h1>Contact Data</h1>
+  <table id="myTable" class="display">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Company</th>
+        <th>Title</th>
+        <th>Street</th>
+        <th>City</th>
+        <th>State</th>
+        <th>Zip</th>
+        <th>Phone</th>
+        <th>Email</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script>
+    fetch('data.txt')
+      .then(res => res.text())
+      .then(text => {
+        // Split blocks by double line break
+        const blocks = text.split(/\n\s*\n/);
+        blocks.forEach(block => {
+          const lines = block.split('\n').map(l => l.trim()).filter(l => l);
+
+          let name = '', company = '', title = '', street = '', city = '', state = '', zip = '', phone = '', email = '';
+
+          lines.forEach(line => {
+            // Detect email
+            if (line.match(/\S+@\S+\.\S+/)) email = line;
+            // Detect phone
+            else if (line.match(/(\+?\d{1,2}[\s-]?)?\d{3}[\s-]?\d{3}[\s-]?\d{4}/)) phone = line;
+            // Detect ZIP (5 digit)
+            else if (line.match(/\b\d{5}\b/)) zip = line.match(/\b\d{5}\b/)[0];
+            // Detect state (2 capital letters)
+            else if (line.match(/\b[A-Z]{2}\b/)) state = line.match(/\b[A-Z]{2}\b/)[0];
+            // Detect street (contains numbers)
+            else if (line.match(/\d+/)) street = line;
+            // Detect title (common words)
+            else if (line.match(/Manager|Director|CEO|President/i)) title = line;
+            // Detect company (if not name or title)
+            else if (!name) name = line;
+            else company = line;
+          });
+
+          $('#myTable tbody').append(
+            `<tr>
+              <td>${name}</td>
+              <td>${company}</td>
+              <td>${title}</td>
+              <td>${street}</td>
+              <td>${city}</td>
+              <td>${state}</td>
+              <td>${zip}</td>
+              <td>${phone}</td>
+              <td>${email}</td>
+            </tr>`
+          );
+        });
+
+        $('#myTable').DataTable();
+      })
+      .catch(err => console.error(err));
+  </script>
+</body>
+</html>
